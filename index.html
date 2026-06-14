@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyDesk — Dashboard Tugas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink:    #1a1a2e;
+  --paper:  #f5f0e8;
+  --cream:  #ede8dc;
+  --warm:   #d4c9b0;
+  --rust:   #c45c3a;
+  --sage:   #5a7a5e;
+  --gold:   #b8860b;
+  --sky:    #3a6b8a;
+  --muted:  #7a7060;
+  --border: #c8bfaa;
+  --card:   #faf7f2;
+  --radius: 10px;
+  --shadow: 0 2px 16px rgba(26,26,46,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family:'Instrument Sans',sans-serif;
+  background: var(--paper);
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(180,160,120,.12) 28px),
+    repeating-linear-gradient(90deg,transparent,transparent 27px,rgba(180,160,120,.06) 28px);
+  background-size:28px 28px;
+  color:var(--ink); min-height:100vh;
+}
+
+/* NAV */
+nav {
+  background:var(--ink); height:58px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px; position:sticky; top:0; z-index:50;
+}
+.nav-logo {
+  font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800;
+  color:var(--paper); letter-spacing:-.5px;
+}
+.nav-logo span { color:#e8a87c; font-family:'Instrument Serif',serif; font-style:italic; }
+.nav-tabs { display:flex; gap:4px; }
+.nav-tab {
+  background:none; border:none; color:rgba(245,240,232,.6);
+  font-family:'Syne',sans-serif; font-size:.82rem; font-weight:700;
+  padding:6px 16px; border-radius:6px; cursor:pointer; transition:all .2s;
+}
+.nav-tab:hover { background:rgba(255,255,255,.1); color:#fff; }
+.nav-tab.active { background:var(--rust); color:#fff; }
+.api-dot {
+  font-family:'Syne',sans-serif; font-size:.72rem; font-weight:700;
+  padding:4px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.15);
+  color:rgba(245,240,232,.5); transition:all .3s;
+}
+.api-dot.ok  { color:#4ade80; border-color:#4ade80; }
+.api-dot.err { color:#f87171; border-color:#f87171; }
+
+/* MAIN */
+.main { max-width:1100px; margin:0 auto; padding:28px 24px 80px; }
+
+/* STATS */
+.stats-row {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:12px; margin-bottom:28px;
+}
+.stat {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:var(--radius); padding:18px 16px; transition:transform .2s;
+}
+.stat:hover { transform:translateY(-2px); }
+.stat-val {
+  font-family:'Syne',sans-serif; font-size:2rem; font-weight:800;
+  line-height:1; margin-bottom:4px;
+}
+.stat-lbl { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
+.c-total .stat-val    { color:var(--sky); }
+.c-belum .stat-val    { color:var(--muted); }
+.c-kerja .stat-val    { color:var(--gold); }
+.c-selesai .stat-val  { color:var(--sage); }
+.c-mendesak .stat-val { color:var(--rust); }
+.c-telat .stat-val    { color:#c0392b; }
+
+/* PANEL */
+.panel-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:18px; flex-wrap:wrap; gap:12px;
+}
+.panel-title {
+  font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:800;
+}
+.panel-title small {
+  font-family:'Instrument Serif',serif; font-style:italic;
+  font-weight:400; color:var(--muted); font-size:.85rem; margin-left:6px;
+}
+
+/* FILTERS */
+.filter-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.filter-row select, .filter-row input {
+  background:var(--card); border:1.5px solid var(--border);
+  color:var(--ink); padding:7px 12px; border-radius:7px;
+  font-family:'Instrument Sans',sans-serif; font-size:.83rem;
+  outline:none; cursor:pointer; transition:border-color .2s;
+}
+.filter-row select:focus, .filter-row input:focus { border-color:var(--rust); }
+
+/* BUTTONS */
+.btn {
+  font-family:'Syne',sans-serif; font-size:.82rem; font-weight:700;
+  border:none; border-radius:7px; cursor:pointer; transition:all .2s;
+  padding:8px 18px;
+}
+.btn-primary  { background:var(--rust); color:#fff; }
+.btn-primary:hover { background:#b0502f; transform:translateY(-1px); }
+.btn-sage     { background:var(--sage); color:#fff; }
+.btn-sage:hover { filter:brightness(1.1); }
+.btn-outline  { background:transparent; color:var(--ink); border:1.5px solid var(--border); }
+.btn-outline:hover { border-color:var(--ink); }
+.btn-danger   { background:#c0392b; color:#fff; }
+.btn-danger:hover { background:#a93226; }
+.btn-sm       { padding:5px 13px; font-size:.76rem; border-radius:6px; }
+.btn-ghost    { background:rgba(26,26,46,.06); color:var(--muted); border:none; }
+.btn-ghost:hover { background:rgba(26,26,46,.12); color:var(--ink); }
+
+/* TUGAS LIST */
+.tugas-grid { display:flex; flex-direction:column; gap:10px; }
+.tugas-card {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:var(--radius); padding:16px 20px;
+  display:grid; grid-template-columns:6px 1fr auto;
+  gap:14px; align-items:center; transition:all .2s;
+  animation:slideIn .3s ease both; box-shadow:var(--shadow);
+}
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(-8px); }
+  to   { opacity:1; transform:none; }
+}
+.tugas-card:hover { border-color:var(--rust); transform:translateX(2px); }
+.tugas-card.done  { opacity:.45; }
+
+.prio-bar { width:6px; border-radius:4px; min-height:52px; align-self:stretch; }
+.prio-rendah  { background:var(--sage); }
+.prio-sedang  { background:var(--sky); }
+.prio-tinggi  { background:var(--rust); }
+
+.tc-judul {
+  font-family:'Syne',sans-serif; font-weight:700; font-size:.96rem;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:5px;
+}
+.tc-meta { font-size:.78rem; color:var(--muted); display:flex; gap:14px; flex-wrap:wrap; }
+.tc-actions { display:flex; gap:6px; flex-shrink:0; }
+
+/* BADGE */
+.badge {
+  padding:2px 10px; border-radius:999px;
+  font-family:'Syne',sans-serif; font-size:.67rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.06em;
+}
+.b-belum      { background:var(--cream); color:var(--muted); border:1px solid var(--border); }
+.b-dikerjakan { background:#fef3cd; color:#856404; border:1px solid #fde68a; }
+.b-selesai    { background:#d1fae5; color:#065f46; border:1px solid #a7f3d0; }
+.b-telat      { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+
+/* MK TABLE */
+.table-wrap {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:var(--radius); overflow:auto;
+}
+table { width:100%; border-collapse:collapse; }
+th {
+  text-align:left; padding:10px 16px;
+  font-family:'Syne',sans-serif; font-size:.72rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+  border-bottom:2px solid var(--border);
+}
+td { padding:12px 16px; border-bottom:1px solid var(--cream); font-size:.88rem; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--cream); }
+
+/* TAB CONTENT */
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+/* MODAL */
+.overlay {
+  position:fixed; inset:0;
+  background:rgba(26,26,46,.5); backdrop-filter:blur(4px);
+  z-index:100; display:flex; align-items:center; justify-content:center; padding:20px;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.overlay.active { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:16px; padding:36px; width:100%; max-width:500px;
+  transform:scale(.96) translateY(14px); transition:transform .25s;
+  box-shadow:0 20px 60px rgba(0,0,0,.18);
+}
+.overlay.active .modal { transform:none; }
+.modal-title {
+  font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800;
+  margin-bottom:22px; display:flex; align-items:center; gap:8px;
+}
+.modal-title .dot { width:10px; height:10px; border-radius:50%; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+
+.field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.field label { font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+.field input, .field select, .field textarea {
+  background:var(--paper); border:1.5px solid var(--border);
+  color:var(--ink); padding:10px 14px; border-radius:8px;
+  font-family:'Instrument Sans',sans-serif; font-size:.9rem;
+  outline:none; transition:border-color .2s; width:100%; resize:vertical;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--rust); }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* EMPTY */
+.empty { text-align:center; padding:60px 0; color:var(--muted); }
+.empty-icon { font-size:2.6rem; margin-bottom:12px; }
+.empty p { font-family:'Instrument Serif',serif; font-style:italic; font-size:1.05rem; }
+
+/* TOAST */
+#toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--ink); color:var(--paper);
+  padding:12px 20px; border-radius:8px; font-size:.85rem;
+  z-index:200; opacity:0; transform:translateY(8px);
+  transition:all .3s; pointer-events:none;
+  border-left:4px solid var(--rust);
+}
+#toast.show { opacity:1; transform:none; }
+#toast.ok   { border-left-color:var(--sage); }
+#toast.err  { border-left-color:#c0392b; }
+
+@media(max-width:640px){
+  nav { padding:0 16px; }
+  .nav-tabs { display:none; }
+  .tugas-card { grid-template-columns:6px 1fr; }
+  .tc-actions { grid-column:1/-1; }
+  .row2 { grid-template-columns:1fr; }
+  .mobile-tabs { display:flex!important; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Study<span>Desk</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('tugas')">📋 Tugas</button>
+    <button class="nav-tab" onclick="switchTab('matakuliah')">📚 Mata Kuliah</button>
+  </div>
+  <span class="api-dot" id="api-dot">⬤ Connecting…</span>
+</nav>
+
+<!-- MOBILE TAB -->
+<div class="main" style="padding-bottom:0">
+  <div class="filter-row mobile-tabs" style="display:none;margin-bottom:16px" id="mobile-tab-bar">
+    <select onchange="switchTab(this.value)" style="flex:1">
+      <option value="tugas">📋 Tugas</option>
+      <option value="matakuliah">📚 Mata Kuliah</option>
+    </select>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STATISTIK -->
+  <div class="stats-row">
+    <div class="stat c-total">   <div class="stat-val" id="s-total">–</div><div class="stat-lbl">Total</div></div>
+    <div class="stat c-belum">   <div class="stat-val" id="s-belum">–</div><div class="stat-lbl">Belum</div></div>
+    <div class="stat c-kerja">   <div class="stat-val" id="s-kerja">–</div><div class="stat-lbl">Dikerjakan</div></div>
+    <div class="stat c-selesai"> <div class="stat-val" id="s-selesai">–</div><div class="stat-lbl">Selesai</div></div>
+    <div class="stat c-mendesak"><div class="stat-val" id="s-mendesak">–</div><div class="stat-lbl">Mendesak</div></div>
+    <div class="stat c-telat">   <div class="stat-val" id="s-telat">–</div><div class="stat-lbl">Terlambat</div></div>
+  </div>
+
+  <!-- TAB TUGAS -->
+  <div id="tab-tugas" class="tab-pane active">
+    <div class="panel-header">
+      <div class="panel-title">Daftar Tugas <small>semua mata kuliah</small></div>
+      <div class="filter-row">
+        <select id="f-status" onchange="loadTugas()">
+          <option value="">Semua Status</option>
+          <option value="belum">Belum</option>
+          <option value="dikerjakan">Dikerjakan</option>
+          <option value="selesai">Selesai</option>
+        </select>
+        <select id="f-prioritas" onchange="loadTugas()">
+          <option value="">Semua Prioritas</option>
+          <option value="rendah">Rendah</option>
+          <option value="sedang">Sedang</option>
+          <option value="tinggi">Tinggi</option>
+        </select>
+        <select id="f-mk" onchange="loadTugas()">
+          <option value="">Semua MK</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openTugasModal()">+ Tugas Baru</button>
+      </div>
+    </div>
+    <div class="tugas-grid" id="tugas-list">
+      <div class="empty"><div class="empty-icon">⏳</div><p>Memuat tugas…</p></div>
+    </div>
+  </div>
+
+  <!-- TAB MATA KULIAH -->
+  <div id="tab-matakuliah" class="tab-pane">
+    <div class="panel-header">
+      <div class="panel-title">Mata Kuliah</div>
+      <button class="btn btn-sage btn-sm" onclick="openMKModal()">+ Mata Kuliah</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Nama Mata Kuliah</th><th>Dosen</th><th>Aksi</th></tr></thead>
+        <tbody id="mk-body">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">Memuat…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL TUGAS -->
+<div class="overlay" id="ov-tugas" onclick="closeOut(event,'ov-tugas')">
+  <div class="modal">
+    <div class="modal-title">
+      <span class="dot" style="background:var(--rust)"></span>
+      <span id="mt-title">Tambah Tugas</span>
+    </div>
+    <input type="hidden" id="mt-id"/>
+    <div class="field">
+      <label>Judul Tugas</label>
+      <input type="text" id="mt-judul" placeholder="cth. Laporan Akhir Praktikum"/>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Mata Kuliah</label>
+        <select id="mt-mk"><option value="">Pilih MK…</option></select>
+      </div>
+      <div class="field">
+        <label>Deadline</label>
+        <input type="datetime-local" id="mt-deadline"/>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Prioritas</label>
+        <select id="mt-prio">
+          <option value="rendah">🟢 Rendah</option>
+          <option value="sedang" selected>🔵 Sedang</option>
+          <option value="tinggi">🔴 Tinggi</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="mt-status">
+          <option value="belum" selected>Belum Mulai</option>
+          <option value="dikerjakan">Sedang Dikerjakan</option>
+          <option value="selesai">Selesai</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Deskripsi</label>
+      <textarea id="mt-desk" rows="2" placeholder="Catatan tambahan…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeOv('ov-tugas')">Batal</button>
+      <button class="btn btn-primary btn-sm" onclick="saveTugas()">Simpan Tugas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MK -->
+<div class="overlay" id="ov-mk" onclick="closeOut(event,'ov-mk')">
+  <div class="modal">
+    <div class="modal-title">
+      <span class="dot" style="background:var(--sage)"></span>
+      <span id="mm-title">Tambah Mata Kuliah</span>
+    </div>
+    <input type="hidden" id="mm-id"/>
+    <div class="field">
+      <label>Nama Mata Kuliah</label>
+      <input type="text" id="mm-nama" placeholder="cth. Basis Data"/>
+    </div>
+    <div class="field">
+      <label>Nama Dosen</label>
+      <input type="text" id="mm-dosen" placeholder="cth. Dr. Siti Rahayu, M.Kom"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeOv('ov-mk')">Batal</button>
+      <button class="btn btn-sage btn-sm" onclick="saveMK()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = 'http://192.168.1.100:8000';
+let mkCache = [];
+let toastT;
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastT); toastT = setTimeout(() => el.className='', 3200);
+}
+
+async function api(method, path, body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.detail || 'Terjadi kesalahan');
+  return d;
+}
+
+function fmt(dt) {
+  if (!dt) return '–';
+  const d = new Date(dt);
+  if (isNaN(d)) return dt;
+  return d.toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function isLate(deadline, status) {
+  if (status === 'selesai') return false;
+  return deadline && new Date(deadline) < new Date();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-pane').forEach(el =>
+    el.classList.toggle('active', el.id === 'tab-' + tab));
+  document.querySelectorAll('.nav-tab').forEach(btn =>
+    btn.classList.toggle('active',
+      (tab === 'tugas' && btn.textContent.includes('Tugas')) ||
+      (tab === 'matakuliah' && btn.textContent.includes('Kuliah'))
+    ));
+  if (tab === 'matakuliah') loadMK();
+}
+
+// ── API STATUS ─────────────────────────────────────────────────────────────
+async function checkApi() {
+  const dot = document.getElementById('api-dot');
+  try {
+    await api('GET', '/');
+    dot.textContent = '⬤ API Terhubung'; dot.className = 'api-dot ok';
+  } catch {
+    dot.textContent = '⬤ API Terputus'; dot.className = 'api-dot err';
+  }
+}
+
+// ── STATISTIK ─────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const d = await api('GET', '/statistik');
+    document.getElementById('s-total').textContent   = d.total    ?? 0;
+    document.getElementById('s-belum').textContent   = d.belum    ?? 0;
+    document.getElementById('s-kerja').textContent   = d.dikerjakan ?? 0;
+    document.getElementById('s-selesai').textContent = d.selesai  ?? 0;
+    document.getElementById('s-mendesak').textContent= d.mendesak ?? 0;
+    document.getElementById('s-telat').textContent   = d.terlambat ?? 0;
+  } catch {}
+}
+
+// ── MATA KULIAH ───────────────────────────────────────────────────────────
+async function loadMKCache() {
+  try {
+    const d = await api('GET', '/mata-kuliah');
+    mkCache = d.data;
+    ['f-mk','mt-mk'].forEach(id => {
+      const sel = document.getElementById(id);
+      const first = sel.options[0];
+      sel.innerHTML = '';
+      sel.appendChild(first);
+      mkCache.forEach(m => sel.appendChild(new Option(m.nama_mk, m.id)));
+    });
+  } catch {}
+}
+
+async function loadMK() {
+  await loadMKCache();
+  const tbody = document.getElementById('mk-body');
+  if (!mkCache.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">Belum ada mata kuliah. Tambahkan dulu!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = mkCache.map((m,i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:.8rem">${i+1}</td>
+      <td style="font-weight:600">${m.nama_mk}</td>
+      <td style="color:var(--muted)">${m.dosen || '–'}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="editMK(${m.id},'${esc(m.nama_mk)}','${esc(m.dosen||'')}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteMK(${m.id},'${esc(m.nama_mk)}')">Hapus</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openMKModal(data=null) {
+  document.getElementById('mm-title').textContent = data ? 'Edit Mata Kuliah' : 'Tambah Mata Kuliah';
+  document.getElementById('mm-id').value    = data?.id ?? '';
+  document.getElementById('mm-nama').value  = data?.nama ?? '';
+  document.getElementById('mm-dosen').value = data?.dosen ?? '';
+  openOv('ov-mk');
+}
+function editMK(id,nama,dosen) { openMKModal({id,nama,dosen}); }
+
+async function saveMK() {
+  const id    = document.getElementById('mm-id').value;
+  const nama  = document.getElementById('mm-nama').value.trim();
+  const dosen = document.getElementById('mm-dosen').value.trim();
+  if (!nama) { toast('Nama mata kuliah wajib diisi!','err'); return; }
+  try {
+    if (id) await api('PUT', `/mata-kuliah/${id}`, {nama_mk:nama, dosen});
+    else    await api('POST', '/mata-kuliah', {nama_mk:nama, dosen});
+    toast(id ? '✅ Mata kuliah diupdate' : '✅ Mata kuliah ditambahkan');
+    closeOv('ov-mk'); loadMKCache(); loadMK();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function deleteMK(id,nama) {
+  if (!confirm(`Hapus mata kuliah "${nama}"?`)) return;
+  try {
+    await api('DELETE', `/mata-kuliah/${id}`);
+    toast('🗑️ Mata kuliah dihapus');
+    loadMKCache(); loadMK();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ── TUGAS ─────────────────────────────────────────────────────────────────
+async function loadTugas() {
+  const status    = document.getElementById('f-status').value;
+  const prioritas = document.getElementById('f-prioritas').value;
+  const mk_id     = document.getElementById('f-mk').value;
+  let url = '/tugas?';
+  if (status)    url += `status=${status}&`;
+  if (prioritas) url += `prioritas=${prioritas}&`;
+  if (mk_id)     url += `mk_id=${mk_id}`;
+
+  const list = document.getElementById('tugas-list');
+  list.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><p>Memuat…</p></div>';
+  try {
+    const d = await api('GET', url);
+    renderTugas(d.data);
+    loadStats();
+  } catch(e) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+function renderTugas(data) {
+  const list = document.getElementById('tugas-list');
+  if (!data?.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div><p>Tidak ada tugas. Santai dulu!</p></div>';
+    return;
+  }
+  list.innerHTML = data.map((t,i) => {
+    const late = isLate(t.deadline, t.status);
+    const bc   = late ? 'b-telat' : `b-${t.status}`;
+    const bt   = late ? 'Terlambat' : {belum:'Belum',dikerjakan:'Dikerjakan',selesai:'Selesai'}[t.status];
+    return `
+    <div class="tugas-card ${t.status==='selesai'?'done':''}" style="animation-delay:${i*30}ms">
+      <div class="prio-bar prio-${t.prioritas}"></div>
+      <div>
+        <div class="tc-judul">
+          ${t.judul}
+          <span class="badge ${bc}">${bt}</span>
+        </div>
+        <div class="tc-meta">
+          <span>📚 ${t.nama_mk}</span>
+          <span>👨‍🏫 ${t.dosen||'–'}</span>
+          <span>⏰ ${fmt(t.deadline)}</span>
+          ${t.deskripsi?`<span>📝 ${t.deskripsi.substring(0,55)}${t.deskripsi.length>55?'…':''}</span>`:''}
+        </div>
+      </div>
+      <div class="tc-actions">
+        <button class="btn btn-outline btn-sm" onclick="editTugas(${t.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTugas(${t.id},'${esc(t.judul)}')">Hapus</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openTugasModal(data=null) {
+  document.getElementById('mt-title').textContent = data ? 'Edit Tugas' : 'Tambah Tugas';
+  document.getElementById('mt-id').value       = data?.id ?? '';
+  document.getElementById('mt-judul').value    = data?.judul ?? '';
+  document.getElementById('mt-mk').value       = data?.mk_id ?? '';
+  document.getElementById('mt-deadline').value = data?.deadline
+    ? data.deadline.replace(' ','T').substring(0,16) : '';
+  document.getElementById('mt-prio').value   = data?.prioritas ?? 'sedang';
+  document.getElementById('mt-status').value = data?.status ?? 'belum';
+  document.getElementById('mt-desk').value   = data?.deskripsi ?? '';
+  openOv('ov-tugas');
+}
+
+async function editTugas(id) {
+  try { openTugasModal(await api('GET', `/tugas/${id}`)); }
+  catch(e) { toast(e.message,'err'); }
+}
+
+async function saveTugas() {
+  const id      = document.getElementById('mt-id').value;
+  const judul   = document.getElementById('mt-judul').value.trim();
+  const mk_id   = document.getElementById('mt-mk').value;
+  const deadline= document.getElementById('mt-deadline').value;
+  if (!judul||!mk_id||!deadline) { toast('Judul, MK, dan deadline wajib diisi!','err'); return; }
+  const body = {
+    judul, mk_id: parseInt(mk_id),
+    deskripsi: document.getElementById('mt-desk').value,
+    deadline:  deadline.replace('T',' ') + ':00',
+    prioritas: document.getElementById('mt-prio').value,
+    status:    document.getElementById('mt-status').value,
+  };
+  try {
+    if (id) await api('PUT', `/tugas/${id}`, body);
+    else    await api('POST', '/tugas', body);
+    toast(id ? '✅ Tugas diupdate!' : '✅ Tugas ditambahkan!');
+    closeOv('ov-tugas'); loadTugas();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function deleteTugas(id, judul) {
+  if (!confirm(`Hapus tugas "${judul}"?`)) return;
+  try {
+    await api('DELETE', `/tugas/${id}`);
+    toast('🗑️ Tugas dihapus'); loadTugas();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openOv(id)  { document.getElementById(id).classList.add('active'); }
+function closeOv(id) { document.getElementById(id).classList.remove('active'); }
+function closeOut(e,id) { if (e.target.id===id) closeOv(id); }
+function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+checkApi();
+loadMKCache();
+loadStats();
+loadTugas();
+
+if (window.innerWidth < 640) {
+  document.getElementById('mobile-tab-bar').style.display = 'flex';
+}
+</script>
+</body>
+</html>
